@@ -105,7 +105,7 @@ def convert(orig_f, word, left_pad, right_pad):
     file = orig_f.strip("\n")
     new_name = build_name(file)
     ngrams = {}
-    with open(file) as f:
+    with open(file, "r", encoding='utf-8', errors='ignore') as f:
         f.readline()
         lines = f.readlines()
         for i in range(len(lines)):
