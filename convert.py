@@ -16,19 +16,32 @@ def get_paths(file):
             ls.append(f.readline())
         return ls
 
+
+def absoluteFilePaths(directory):
+    """
+    getsthe absolute path to all files in all sub directories in directory
+    credit to: http://stackoverflow.com/a/9816863
+    """
+    for dirpath, _, filenames in os.walk(directory):
+        for f in filenames:
+            yield os.path.abspath(os.path.join(dirpath, f))
+
+
 def createDirs():
     if not os.path.exists("../Converted_files"):
         os.makedirs("../Converted_files")
 
-def main(nlength, desired_word, files=None):
+
+def main(nlength, desired_word, directory, isFile=False):
     """
     params:
-    files: A file containing a list of paths to the files to convert.
     nlength: the number of words you want to have around the word you are
              searching for. for example with nlenght 7 and desired_word
              mouse you would have n-grams like:
               "the little brown mouse jumped across the"
     desired_word: the word ou are looking for. "mouse" in the example above.
+    directory: Either the directory in which to search for files to convert of if
+        isFiles is true its a file containing the paths to al the files to convert
     returns: Nothing but number of converted files will be in the directory
              If you run this of files f1 and f1 you will see:
                convert_f1 and convert_f2 in the same directory
@@ -36,12 +49,16 @@ def main(nlength, desired_word, files=None):
     print("pararms in main:")
     print("nlength: " + str(nlength))
     print("desired_word: " + str(desired_word))
-    print("files: " + files)
+    print("directory: " + directory)
     createDirs()
-    file_paths = get_paths(files)
+    if isFile:
+        file_paths = get_paths(directory)
+    else:
+        file_paths = directory
     left_pad = nlength // 2
     right_pad = nlength - left_pad
-    for i in file_paths:
+    for i in absoluteFilePaths(file_paths):
+        print("working on ", i)
         convert(i, desired_word, left_pad, right_pad)
 
 
@@ -96,14 +113,18 @@ def convert(orig_f, word, left_pad, right_pad):
             if lemma == word:
                 if i + right_pad < len(lines):
                     if i - left_pad < 0:
-                        gram = constructGram(lines[: i + right_pad])
+                        #  print("i-left < 0, i + right < len(lines)")
+                        gram = constructGram(lines[i: i + right_pad])
                     else:
+                        #  print("i - left >= 0, i + right < len(lines)")
                         gram = constructGram(lines[i - left_pad:
                                                    i + right_pad])
                 else:
                     if i - left_pad < 0:
+                        #  print("left out of bounds, right oob")
                         gram = constructGram(lines)
                     else:
+                        #  print("left in bounds, right oob")
                         gram = constructGram(lines[i - left_pad:])
                 store(ngrams, gram)
     writeStore("../Converted_files/", ngrams, new_name)
