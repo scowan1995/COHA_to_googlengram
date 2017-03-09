@@ -27,22 +27,28 @@ def absoluteFilePaths(directory):
             yield os.path.abspath(os.path.join(dirpath, f))
 
 
-def createDirs():
-    if not os.path.exists("../Converted_files"):
-        os.makedirs("../Converted_files")
+def createDirs(saveHere):
+    if not os.path.exists(saveHere):
+        os.makedirs(saveHere)
 
 
-def main(nlength, desired_word, directory, isFile=False):
+def main(nlength, desired_word, directory, saveTo, isFile=False):
     """
     params:
     nlength: the number of words you want to have around the word you are
              searching for. for example with nlenght 7 and desired_word
              mouse you would have n-grams like:
               "the little brown mouse jumped across the"
-    desired_word: the word ou are looking for. "mouse" in the example above.
-    directory: Either the directory in which to search for files to convert of if
-        isFiles is true its a file containing the paths to al the files to convert
-    returns: Nothing but number of converted files will be in the directory
+    desired_word:
+    the word ou are looking for. "mouse" in the example above.
+    directory:
+    Either the directory in which to search for files to convert or
+        if isFiles is true its a file containing the paths to all the files to
+         convert.
+    saveTo:
+        the file you want saved to
+    returns:
+    Nothing but number of converted files will be in the directory
              If you run this of files f1 and f1 you will see:
                convert_f1 and convert_f2 in the same directory
     """
@@ -50,7 +56,7 @@ def main(nlength, desired_word, directory, isFile=False):
     print("nlength: " + str(nlength))
     print("desired_word: " + str(desired_word))
     print("directory: " + directory)
-    createDirs()
+    createDirs(saveTo)
     if isFile:
         file_paths = get_paths(directory)
     else:
@@ -59,7 +65,7 @@ def main(nlength, desired_word, directory, isFile=False):
     right_pad = nlength - left_pad
     for i in absoluteFilePaths(file_paths):
         print("working on ", i)
-        convert(i, desired_word, left_pad, right_pad)
+        convert(i, desired_word, left_pad, right_pad, saveTo)
 
 
 def build_name(path):
@@ -97,7 +103,7 @@ def store(ngrams: dict, gram: str):
         ngrams[gram] = 1
 
 
-def convert(orig_f, word, left_pad, right_pad):
+def convert(orig_f, word, left_pad, right_pad, saveTo):
     """
     converts one particular file into a ngram format
     retruns whther or not the word was found
@@ -105,12 +111,14 @@ def convert(orig_f, word, left_pad, right_pad):
     file = orig_f.strip("\n")
     new_name = build_name(file)
     ngrams = {}
+    word_found = False
     with open(file, "r", encoding='utf-8', errors='ignore') as f:
         f.readline()
         lines = f.readlines()
         for i in range(len(lines)):
             lemma = getLemma(lines[i])
             if lemma == word:
+                word_found = True
                 if i + right_pad < len(lines):
                     if i - left_pad < 0:
                         #  print("i-left < 0, i + right < len(lines)")
@@ -127,7 +135,8 @@ def convert(orig_f, word, left_pad, right_pad):
                         #  print("left in bounds, right oob")
                         gram = constructGram(lines[i - left_pad:])
                 store(ngrams, gram)
-    writeStore("../Converted_files/", ngrams, new_name)
+    if word_found:
+        writeStore(saveTo, ngrams, new_name)
 
 
 def writeStore(path, store, name):
@@ -172,13 +181,15 @@ if __name__ == "__main__":
     """
     arg1: nlength -- the length of the desired ngram
     arg2: desired word -- the word you are looking for the senses of
-    arg3: a list of the files you want
+    arg3: a list of the files you want or the directory containing all the files
+    arg4: the name of the file you want saved
     """
     if sys.argv[1].lower() == "help":
         print("arg1: nlength -- the length of the desired ngram \
                arg2: desired word -- the word you want to search for \
-               arg3: a list of the files you want")
+               arg3: a list of the files you want or a directory containing all the files \
+               arg3: the name of the file you want saved")
     if len(sys.argv) >= 4:
-        main(int(sys.argv[1]), sys.argv[2], sys.argv[3])
+        main(int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         print("\nError: not enough params\n")
