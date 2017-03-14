@@ -32,7 +32,7 @@ def createDirs(saveHere):
         os.makedirs(saveHere)
 
 
-def main(nlength, desired_word, directory, saveTo, isFile=False):
+def main(nlength, desired_word, directory, saveTo, pad, isFile=False):
     """
     params:
     nlength: the number of words you want to have around the word you are
@@ -65,7 +65,7 @@ def main(nlength, desired_word, directory, saveTo, isFile=False):
     right_pad = nlength - left_pad
     for i in absoluteFilePaths(file_paths):
         print("working on ", i)
-        convert(i, desired_word, left_pad, right_pad, saveTo)
+        convert(i, desired_word, left_pad, right_pad, saveTo, pad)
 
 
 def build_name(path):
@@ -103,7 +103,7 @@ def store(ngrams: dict, gram: str):
         ngrams[gram] = 1
 
 
-def convert(orig_f, word, left_pad, right_pad, saveTo):
+def convert(orig_f, word, left_pad, right_pad, saveTo, pad):
     """
     converts one particular file into a ngram format
     retruns whther or not the word was found
@@ -121,16 +121,20 @@ def convert(orig_f, word, left_pad, right_pad, saveTo):
                 word_found = True
                 if i + right_pad < len(lines):
                     if i - left_pad < 0:
-                        #  print("i-left < 0, i + right < len(lines)")
-                        gram = constructGram(lines[i: i + right_pad])
+                        #  print("left oob, right in bounds")
+                        gram = constructGram(lines[: i + right_pad])
+                        if pad:
+                            gram = "token " + gram
                     else:
-                        #  print("i - left >= 0, i + right < len(lines)")
+                        #  print("left in bounds, right in bounds")
                         gram = constructGram(lines[i - left_pad:
                                                    i + right_pad])
                 else:
                     if i - left_pad < 0:
                         #  print("left out of bounds, right oob")
                         gram = constructGram(lines)
+                        if pad:
+                            gram = "token " + gram
                     else:
                         #  print("left in bounds, right oob")
                         gram = constructGram(lines[i - left_pad:])
@@ -141,7 +145,7 @@ def convert(orig_f, word, left_pad, right_pad, saveTo):
 
 def writeStore(path, store, name):
     year = name.split("_")[-1]
-    with open(path + name, "w+") as f:
+    with open(path + name, "a+") as f:
         for i in store:
             f.write(i + " " + str(year) + " " + str(store[i]) + " 1\n")
 
@@ -182,14 +186,15 @@ if __name__ == "__main__":
     arg1: nlength -- the length of the desired ngram
     arg2: desired word -- the word you are looking for the senses of
     arg3: a list of the files you want or the directory containing all the files
-    arg4: the name of the file you want saved
+    arg4: the name folder you want to files saved to 
     """
     if sys.argv[1].lower() == "help":
-        print("arg1: nlength -- the length of the desired ngram \
-               arg2: desired word -- the word you want to search for \
-               arg3: a list of the files you want or a directory containing all the files \
-               arg3: the name of the file you want saved")
+        print("arg1: nlength -- the length of the desired ngram\n \
+               arg2: desired word -- the word you want to search for\n \
+               arg3: a list of the files you want or a directory containing all the files \n\
+               arg4: the name of folder you want to files saved to, uses a relative path")
+        print("arg 5: true if you want to pad once to the left")
     if len(sys.argv) >= 4:
-        main(int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4])
+        main(int(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     else:
         print("\nError: not enough params\n")
