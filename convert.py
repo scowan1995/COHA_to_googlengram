@@ -1,6 +1,16 @@
 import sys
 import os
 
+def get_form(line):
+    """
+    gets the form of the word,
+    can use instead of getLemma
+    TODO: pick a function naming convention and stick with it
+    """
+    if line == "":
+        return ""
+    s = line.split("\t")
+    return s[0]
 
 def get_paths(file):
     """
@@ -80,7 +90,9 @@ def build_name(path):
         print("will use: " + "_".join(fname))
         return "_".join(fname)
     else:
-        new_name = fname[0] + "_" + fname[2] + "_" + fname[1]
+        new_name = fname[1] + "_" + fname[0] + "_" + fname[2] + "_" + fname[1]
+        # had to put year at the front to allow for the graphing program to graph properly
+        # had to putthe year at the end to allow the learning program to learn properly
         return new_name
 
 

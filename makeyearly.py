@@ -57,9 +57,10 @@ def getNgrams(file, store):
 
 def writeStore(store, year):
     createDirs("../Final")
-    with open("../Final/" + str(year), "w+") as f:
+    with open("../Final/" + str(year), "a+") as f:
         for i in store:
-            f.write(i + " " + str(store[i]) + " 1\n")
+            print("writing", i, " ", year)
+            f.write(i + " " + str(year) + " "  + str(store[i]) + " 1\n")
 
 
 def createDirs(saveHere):
