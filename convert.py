@@ -74,7 +74,6 @@ def main(nlength, desired_word, directory, saveTo, pad, isFile=False):
     left_pad = nlength // 2
     right_pad = nlength - left_pad
     for i in absoluteFilePaths(file_paths):
-        print("working on ", i)
         convert(i, desired_word, left_pad, right_pad, saveTo, pad)
 
 
@@ -115,7 +114,7 @@ def store(ngrams: dict, gram: str):
         ngrams[gram] = 1
 
 
-def convert(orig_f, word, left_pad, right_pad, saveTo, pad):
+def convert(orig_f, word, left_pad, right_pad, saveTo, pad, overcount=True):
     """
     converts one particular file into a ngram format
     retruns whther or not the word was found
@@ -130,27 +129,43 @@ def convert(orig_f, word, left_pad, right_pad, saveTo, pad):
         for i in range(len(lines)):
             lemma = getLemma(lines[i])
             if lemma == word:
+                # should probably hide all this away in a nice function,
+                # should really make the converter an object with this many params
+                # no time tho
                 word_found = True
-                if i + right_pad < len(lines):
-                    if i - left_pad < 0:
-                        #  print("left oob, right in bounds")
-                        gram = constructGram(lines[: i + right_pad])
-                        if pad:
-                            gram = "token " + gram
-                    else:
-                        #  print("left in bounds, right in bounds")
-                        gram = constructGram(lines[i - left_pad:
-                                                   i + right_pad])
+                if overcount:
+                    full_width = left_pad + right_pad
+                    for j in range(full_width):
+                        if i - j + 1  <= 0 and i - j + 1 + full_width >= len(lines):
+                            gram = constructGram(lines)
+                        elif i - j + 1  <= 0:
+                            gram = constructGram(lines[:i-j+1+full_width])
+                        elif i-j + 1 + full_width  >= len(lines):
+                            gram = constructGram(lines[i - j + 1:])
+                        else:
+                            gram = constructGram(lines[i - j + 1 : i - j + 1 + full_width])
+                        store(ngrams, gram)
                 else:
-                    if i - left_pad < 0:
-                        #  print("left out of bounds, right oob")
-                        gram = constructGram(lines)
-                        if pad:
-                            gram = "token " + gram
+                    if i + right_pad < len(lines):
+                        if i - left_pad < 0:
+                            #  print("left oob, right in bounds")
+                            gram = constructGram(lines[: i + right_pad])
+                            if pad:
+                                gram = "token " + gram
+                        else:
+                            #  print("left in bounds, right in bounds")
+                            gram = constructGram(lines[i - left_pad:
+                                                    i + right_pad])
                     else:
-                        #  print("left in bounds, right oob")
-                        gram = constructGram(lines[i - left_pad:])
-                store(ngrams, gram)
+                        if i - left_pad < 0:
+                            #  print("left out of bounds, right oob")
+                            gram = constructGram(lines)
+                            if pad:
+                                gram = "token " + gram
+                        else:
+                            #  print("left in bounds, right oob")
+                            gram = constructGram(lines[i - left_pad:])
+                    store(ngrams, gram)
     if word_found:
         writeStore(saveTo, ngrams, new_name)
 
